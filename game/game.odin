@@ -62,7 +62,7 @@ update :: proc() {
 
 	input = linalg.normalize0(input)
 	g_mem.player_pos += input * rl.GetFrameTime() * 100
-	g_mem.some_number += 1
+	g_mem.some_number += 0
 }
 
 draw :: proc() {
@@ -94,7 +94,7 @@ game_init_window :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE})
 	rl.InitWindow(1280, 720, "Odin + Raylib + Hot Reload template!")
 	rl.SetWindowPosition(200, 200)
-	rl.SetTargetFPS(500)
+	rl.SetTargetFPS(60)
 }
 
 @(export)
