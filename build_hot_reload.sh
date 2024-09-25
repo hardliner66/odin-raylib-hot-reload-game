@@ -25,7 +25,7 @@ case $(uname) in
     ;;
 *)
     DLL_EXT=".so"
-    EXTRA_LINKER_FLAGS="'-Wl,-rpath=\$ORIGIN/linux'"
+    EXTRA_LINKER_FLAGS="'-Wl,-rpath=\$ORIGIN/../linux'"
 
     # Copy the linux libraries into the project automatically.
     if [ ! -d "linux" ]; then

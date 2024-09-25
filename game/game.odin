@@ -14,72 +14,25 @@
 
 package game
 
-import "core:math/linalg"
 import "core:fmt"
+import "core:math"
 import rl "vendor:raylib"
 
 PIXEL_WINDOW_HEIGHT :: 720
-
-SpriteSheet :: struct {
-	texture: rl.Texture,
-
-	sprite_size: rl.Vector2,
-	sprite_size_half: rl.Vector2,
-	frame_rec: rl.Rectangle,
-
-	frame_speed: i32,
-	frame_counter: i32,
-	current_frame: i32,
-}
-
-new_spritesheet :: proc(texture: rl.Texture, frame_speed: i32, horizontal_sprite_count: f32, vertical_sprite_count: f32) -> SpriteSheet {
-	sprite_width := f32(texture.width) / horizontal_sprite_count
-	sprite_height := f32(texture.height) / vertical_sprite_count
-	return SpriteSheet {
-		texture = texture,
-		sprite_size = rl.Vector2{sprite_width, sprite_height},
-		sprite_size_half = rl.Vector2{sprite_width/2, sprite_height/2},
-		frame_rec = rl.Rectangle{0, 0, sprite_width, sprite_height},
-		frame_speed = frame_speed,
-		frame_counter = 0,
-		current_frame = 0,
-	}
-}
-
-PlayerState :: enum {
-	Idle,
-	Running,
-	Jumping,
-}
-
-Direction :: enum {
-	Left,
-	Right,
-}
-
-Player :: struct {
-	position: rl.Vector2,
-	velocity: rl.Vector2,
-	grounded: bool,
-	state: PlayerState,
-	last_state: PlayerState,
-	sprite_sheet: SpriteSheet,
-}
-
-new_player :: proc(sprite_sheet: SpriteSheet) -> Player {
-	return Player {
-		position = rl.Vector2{0, 0},
-		velocity = rl.Vector2{0, 0},
-		grounded = true,
-		state = PlayerState.Idle,
-		last_state = PlayerState.Idle,
-		sprite_sheet = sprite_sheet,
-	}
-}
+MAX_SPEED_X :: 25
+SCREEN_WIDTH :: 800
+SCREEN_HEIGHT :: 450
+ACCELERATION_X_GROUNDED :: 3
+ACCELERATION_X_AIR :: 2
+ACCELERATION_Y :: 25
+FRICTION :: 1.0
+GRAVITY :: 0.98
+DESIRED_FPS :: 60
 
 Game_Memory :: struct {
 	player: Player,
-	some_number: int,
+	tileset: rl.Texture,
+	sprite_width_tiles: f32,
 }
 
 g_mem: ^Game_Memory
@@ -89,7 +42,7 @@ game_camera :: proc() -> rl.Camera2D {
 	h := f32(rl.GetScreenHeight())
 
 	return {
-		zoom = h/PIXEL_WINDOW_HEIGHT,
+		zoom = 1, //h/PIXEL_WINDOW_HEIGHT,
 		target = g_mem.player.position + g_mem.player.sprite_sheet.sprite_size_half,
 		offset = { w/2, h/2 },
 	}
@@ -102,24 +55,25 @@ ui_camera :: proc() -> rl.Camera2D {
 }
 
 update :: proc() {
-	input: rl.Vector2
+	handle_input(&g_mem.player, ACCELERATION_X_GROUNDED, ACCELERATION_X_AIR, ACCELERATION_Y)
 
-	if rl.IsKeyDown(.UP) || rl.IsKeyDown(.W) {
-		input.y -= 1
-	}
-	if rl.IsKeyDown(.DOWN) || rl.IsKeyDown(.S) {
-		input.y += 1
-	}
-	if rl.IsKeyDown(.LEFT) || rl.IsKeyDown(.A) {
-		input.x -= 1
-	}
-	if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
-		input.x += 1
+	g_mem.player.velocity.x = math.clamp(g_mem.player.velocity.x, -MAX_SPEED_X, MAX_SPEED_X)
+
+	if g_mem.player.grounded {
+		apply_friction(&g_mem.player, FRICTION)
+	} else {
+		apply_gravity(&g_mem.player, GRAVITY)
 	}
 
-	input = linalg.normalize0(input)
-	g_mem.player.position += input * rl.GetFrameTime() * 100
-	g_mem.some_number -= 1
+	update_position(&g_mem.player)
+
+	update_state(&g_mem.player)
+
+	if g_mem.player.state == PlayerState.Running && g_mem.player.last_state != PlayerState.Running {
+		reset_frame(&g_mem.player)
+	}
+
+	animate(&g_mem.player)
 }
 
 draw :: proc() {
@@ -136,10 +90,37 @@ draw :: proc() {
 		},
 		rl.BLACK,
 	)
+
+	for i := 0; i < 100; i+=1 {
+		frame_rec_tiles := rl.Rectangle{
+			f32((i + 100) % 5) * g_mem.sprite_width_tiles,
+			0,
+			g_mem.sprite_width_tiles,
+			g_mem.sprite_width_tiles,
+		}
+
+		rl.DrawTextureRec(
+			g_mem.tileset,
+			frame_rec_tiles,
+			rl.Vector2{f32(i) * g_mem.sprite_width_tiles, 0},
+			rl.BROWN,
+		)
+
+		rl.DrawRectangleLinesEx(
+			rl.Rectangle{
+				f32(i) * g_mem.sprite_width_tiles,
+				0,
+				g_mem.sprite_width_tiles,
+				g_mem.sprite_width_tiles,
+			},
+			1,
+			rl.BLACK,)
+	}
+
 	rl.EndMode2D()
 
 	rl.BeginMode2D(ui_camera())
-	rl.DrawText(fmt.ctprintf("some_number: %v\nplayer.position: %v", g_mem.some_number, g_mem.player.position), 5, 5, 8, rl.BLACK)
+	rl.DrawText(fmt.ctprintf("player.position: %v", g_mem.player.position), 5, 5, 8, rl.BLACK)
 	rl.EndMode2D()
 
 	rl.EndDrawing()
@@ -164,9 +145,15 @@ game_init_window :: proc() {
 game_init :: proc() {
 	g_mem = new(Game_Memory)
 
+	texture := rl.LoadTexture("assets/main.png")
+	sprite_sheet := new_spritesheet(texture, 8, 4, 1)
+
+	tileset := rl.LoadTexture("assets/tiles.png")
+
 	g_mem^ = Game_Memory {
-		some_number = 100,
-		player = new_player(new_spritesheet(rl.LoadTexture("assets/main.png"), 8, 4, 1)),
+		player = new_player(sprite_sheet),
+		tileset = tileset,
+		sprite_width_tiles = f32(tileset.width) / 6,
 	}
 
 	game_hot_reloaded(g_mem)
