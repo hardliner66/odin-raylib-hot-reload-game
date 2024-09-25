@@ -1,7 +1,7 @@
 package game
 
 import "core:math"
-import rl "../raylib"
+import rl "vendor:raylib"
 
 PlayerState :: enum {
 	Idle,

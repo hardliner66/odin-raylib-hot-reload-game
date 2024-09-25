@@ -49,7 +49,7 @@ echo %PDB_NUMBER% > pdbs\pdb_number
 :: Also note that we always write game.dll to the same file. game_hot_reload.exe
 :: monitors this file and does the hot reload when it changes.
 echo Building game.dll
-odin build game -strict-style -vet -debug -define:RAYLIB_SHARED=true -build-mode:dll -out:build/game.dll -pdb-name:pdbs\game_%PDB_NUMBER%.pdb > nul
+odin build game -strict-style -vet -debug -define:RAYLIB_SHARED=true -build-mode:dll -out:build/game.dll -pdb-name:pdbs\game_%PDB_NUMBER%.pdb
 IF %ERRORLEVEL% NEQ 0 exit /b 1
 
 :: If game.exe already running: Then only compile game.dll and exit cleanly

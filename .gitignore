@@ -2,9 +2,9 @@
 *.raddbgi
 *.raddbg
 log.txt
-linux
+/linux
 atlas.png
-pdbs/
+/pdbs
 nohup.out
-dist
-build
+/dist
+/build

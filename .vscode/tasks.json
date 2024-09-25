@@ -38,7 +38,7 @@
                 "command": "${workspaceFolder}/build_hot_reload.bat; start ${workspaceFolder}/build/game.exe",
             },
             "linux": {
-                "command": "${workspaceFolder}/build_hot_reload.sh && nohup ./build/game_hot_reload.bin & && sleep 1",
+                "command": "${workspaceFolder}/build_hot_reload.sh",
             },
             "osx": {
                 "command": "${workspaceFolder}/build_hot_reload.sh",

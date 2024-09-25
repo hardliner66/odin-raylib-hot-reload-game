@@ -1,6 +1,6 @@
 package game
 
-import rl "../raylib"
+import rl "vendor:raylib"
 
 SpriteSheet :: struct {
 	texture: rl.Texture,
