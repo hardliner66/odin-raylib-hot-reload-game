@@ -60,7 +60,7 @@ if %GAME_RUNNING% == true (
 
 :: Build game.exe, which starts the program and loads game.dll och does the logic for hot reloading.
 echo Building %EXE%
-odin build main_hot_reload -strict-style -vet -debug -out:%EXE%
+odin build extras/main_hot_reload -strict-style -vet -debug -out:%EXE%
 IF %ERRORLEVEL% NEQ 0 exit /b 1
 
 :: Warning about raylib DLL not existing and where to find it.
@@ -73,9 +73,13 @@ set ODIN_PATH=
 
 for /f %%i in ('odin root') do set ODIN_PATH=%%i
 
+if exist "build\raylib.dll" (
+	exit /b 0
+)
+
 if exist "%ODIN_PATH%\vendor\raylib\windows\raylib.dll" (
 	echo raylib.dll not found in current directory. Copying from %ODIN_PATH%\vendor\raylib\windows\raylib.dll
-	copy "%ODIN_PATH%\vendor\raylib\windows\raylib.dll" build
+	copy "%ODIN_PATH%\vendor\raylib\windows\raylib.dll" build\
 	exit /b 0
 )
 

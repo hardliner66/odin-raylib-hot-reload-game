@@ -49,5 +49,5 @@ if pgrep -f game_hot_reload.bin > /dev/null; then
     exit 0
 else
     echo "Building game_hot_reload.bin"
-    odin build main_hot_reload -out:build/game_hot_reload.bin -strict-style -vet -debug
+    odin build extras/main_hot_reload -out:build/game_hot_reload.bin -strict-style -vet -debug
 fi

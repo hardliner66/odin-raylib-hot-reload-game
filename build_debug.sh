@@ -2,4 +2,4 @@
 
 mkdir -p build
 
-odin build main_release -out:build/game_debug.bin -strict-style -vet -debug
+odin build extras/main_release -out:build/game_debug.bin -strict-style -vet -debug

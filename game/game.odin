@@ -16,7 +16,7 @@ package game
 
 import "core:fmt"
 import "core:math"
-import rl "vendor:raylib"
+import rl "../raylib"
 
 PIXEL_WINDOW_HEIGHT :: 720
 MAX_SPEED_X :: 25
